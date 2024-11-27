@@ -1,15 +1,14 @@
 import React, { useContext, useEffect, useState } from "react";
-import DataTable from "react-data-table-component";
 import { AdminContext } from "../../context/AdminContext";
 import { AppContext } from "../../context/AppContext";
 import axios from "axios";
 import { toast } from "react-toastify";
+import DataTable from "react-data-table-component";
 
 const UsersList = () => {
   const { backendUrl } = useContext(AppContext);
   const { users, aToken, getAllUser } = useContext(AdminContext);
-  const [filteredUsers, setFilteredUsers] = useState([]);
-  const [search, setSearch] = useState("");
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [userData, setUserData] = useState({
@@ -19,14 +18,19 @@ const UsersList = () => {
     address: "",
     gender: "",
     dob: "",
-    password: "", // Thêm trường password
+    password: "",
   });
+  const [filteredUsers, setFilteredUsers] = useState(users);
 
   useEffect(() => {
     if (aToken) {
       getAllUser();
     }
   }, [aToken]);
+
+  useEffect(() => {
+    setFilteredUsers(users);
+  }, [users]);
 
   const openModal = (user = null) => {
     setIsEditMode(!!user);
@@ -38,7 +42,7 @@ const UsersList = () => {
         address: "",
         gender: "",
         dob: "",
-        password: "", // Reset password khi mở modal
+        password: "",
       }
     );
     setIsModalOpen(true);
@@ -56,7 +60,6 @@ const UsersList = () => {
   const handleSaveUser = async () => {
     try {
       if (isEditMode) {
-        // Gọi API chỉnh sửa người dùng
         await axios.post(
           `${backendUrl}/api/user/edit-user`,
           { ...userData, userId: userData.id },
@@ -64,7 +67,6 @@ const UsersList = () => {
         );
         toast.success("Thành công");
       } else {
-        // Gọi API thêm người dùng
         await axios.post(`${backendUrl}/api/user/add-user`, userData, {
           headers: { aToken },
         });
@@ -78,47 +80,22 @@ const UsersList = () => {
     }
   };
 
-  useEffect(() => {
-    const result = users.filter(
-      (user) =>
-        user.name.toLowerCase().includes(search.toLowerCase()) ||
-        user.email.toLowerCase().includes(search.toLowerCase()) ||
-        user.phone.includes(search)
+  const handleSearch = (searchTerm) => {
+    const filtered = users.filter((user) =>
+      Object.values(user).some((value) =>
+        value?.toString().toLowerCase().includes(searchTerm.toLowerCase())
+      )
     );
-    setFilteredUsers(result);
-  }, [search, users]);
+    setFilteredUsers(filtered);
+  };
 
   const columns = [
-    {
-      name: "Họ tên",
-      selector: (row) => row.name,
-      sortable: true,
-      width: "200px",
-    },
-    {
-      name: "Email",
-      selector: (row) => row.email,
-      sortable: true,
-      width: "300px",
-    },
-    {
-      name: "SDT",
-      selector: (row) => row.phone,
-      sortable: true,
-    },
-    {
-      name: "Địa chỉ",
-      selector: (row) => row.address,
-    },
-    {
-      name: "Giới tính",
-      selector: (row) => row.gender,
-    },
-    {
-      name: "Ngày sinh",
-      selector: (row) => row.dob,
-      sortable: true,
-    },
+    { name: "Họ tên", selector: (row) => row.name, sortable: true },
+    { name: "Email", selector: (row) => row.email, sortable: true },
+    { name: "SDT", selector: (row) => row.phone, sortable: true },
+    { name: "Địa chỉ", selector: (row) => row.address, sortable: true },
+    { name: "Giới tính", selector: (row) => row.gender, sortable: true },
+    { name: "Ngày sinh", selector: (row) => row.dob, sortable: true },
     {
       name: "Thao tác",
       cell: (row) => (
@@ -126,75 +103,29 @@ const UsersList = () => {
           Chỉnh Sửa
         </button>
       ),
-      ignoreRowClick: true,
-      allowOverflow: true,
-      button: true,
     },
   ];
 
   return (
-    <div className="w-full max-w-6xl m-5 overflow-y-scroll">
-      <h1 className="text-lg font-medium">Danh sách bệnh nhân</h1>
-      <button
-        onClick={() => openModal()}
-        className="mt-4 mb-4 bg-blue-500 text-white px-4 py-2 rounded"
-      >
-        Thêm Mới
-      </button>
-
-      <div className="w-full max-w-6xl pt-5">
-        <h1 className="text-lg font-medium mb-4">Danh sách bệnh nhân</h1>
-
-        <input
-          type="text"
-          placeholder="Tìm kiếm..."
-          className="mb-4 px-4 py-2 border border-gray-300 rounded w-full"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-
-        <DataTable
-          columns={columns}
-          data={filteredUsers}
-          pagination
-          highlightOnHover
-          responsive
-          customStyles={{
-            header: {
-              style: {
-                fontSize: "16px", // Kích thước chữ tiêu đề
-                fontWeight: "bold", // Đậm tiêu đề
-                color: "#262626", // Màu chữ tiêu đề
-                backgroundColor: "#EAEFFF", // Nền tiêu đề
-              },
-            },
-            headCells: {
-              style: {
-                paddingLeft: "16px", // Khoảng cách bên trái
-                paddingRight: "16px", // Khoảng cách bên phải
-                color: "#262626", // Màu chữ
-                fontSize: "14px", // Kích thước chữ
-                fontWeight: "600", // Đậm
-                textAlign: "left", // Căn trái
-              },
-            },
-            rows: {
-              style: {
-                fontSize: "14px", // Kích thước chữ hàng
-                color: "#5C5C5C", // Màu chữ
-              },
-            },
-            cells: {
-              style: {
-                padding: "12px", // Khoảng cách giữa các ô
-                fontSize: "14px", // Kích thước chữ trong ô
-                color: "#262626", // Màu chữ
-              },
-            },
-          }}
-          className="min-w-full"
-        />
-      </div>
+    <div className="m-5">
+      <DataTable
+        title="Danh sách bệnh nhân"
+        columns={columns}
+        data={filteredUsers}
+        pagination
+        highlightOnHover
+        fixedHeader
+        fixedHeaderScrollHeight="400px"
+        subHeader
+        subHeaderComponent={
+          <input
+            type="text"
+            placeholder="Tìm kiếm..."
+            className="w-full p-2 border"
+            onChange={(e) => handleSearch(e.target.value)}
+          />
+        }
+      />
 
       {/* Modal thêm mới / chỉnh sửa */}
       {isModalOpen && (

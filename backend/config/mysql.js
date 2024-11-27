@@ -1,6 +1,6 @@
 // db.js
-import mysql from 'mysql2/promise';
-import dotenv from 'dotenv';
+import mysql from "mysql2/promise";
+import dotenv from "dotenv";
 
 dotenv.config();
 
@@ -11,7 +11,7 @@ const connectDB = async () => {
       user: process.env.DB_USER,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
-      port: 3306
+      port: 3306,
     });
 
     console.log("Database Connected");
@@ -23,6 +23,6 @@ const connectDB = async () => {
     console.error("Database connection failed:", error);
     process.exit(1); // Thoát ứng dụng nếu kết nối thất bại
   }
-}
+};
 
 export default connectDB;

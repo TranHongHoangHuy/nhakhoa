@@ -80,7 +80,7 @@ const Sidebar = () => {
               )}
             </div>
           )}
-
+          {aToken !== "eyJhbGciOiJIUzI1NiJ9.bmhhbnZpZW5AZ21haWwuY29tMTIzNDU2Nzg5.X50HKqcCT48nLV1sMwwHGT0jB3c9ev0RWAUjUYB8t18" && (
           <div>
             <button 
               onClick={toggleServiceMenu} 
@@ -91,6 +91,12 @@ const Sidebar = () => {
 
             {serviceMenuOpen && (
               <div className='pl-8'>
+                 <NavLink 
+                    to={'/service-list'} 
+                    className={({ isActive }) => `flex items-center gap-3 py-3.5 px-3 md:px-9 md:min-w-72 cursor-pointer ${isActive ? 'bg-[#F2F3FF] border-r-4 border-primary' : ''}`}>
+                    <img className='min-w-5' src={assets.list_icon} alt='' />
+                    <p className='hidden md:block'>Danh sách dịch vụ</p>
+                  </NavLink>
                 <NavLink 
                   to={'/add-service'} 
                   className={({ isActive }) => `flex items-center gap-3 py-3.5 px-3 md:px-9 md:min-w-72 cursor-pointer ${isActive ? 'bg-[#F2F3FF] border-r-4 border-primary' : ''}`}>
@@ -100,7 +106,7 @@ const Sidebar = () => {
               </div>
             )}
           </div>
-
+          )}
           <div>
             <button 
               onClick={toggleNewsMenu} 
@@ -111,6 +117,12 @@ const Sidebar = () => {
 
             {newsMenuOpen && (
               <div className='pl-8'>
+                <NavLink 
+                    to={'/news-list'} 
+                    className={({ isActive }) => `flex items-center gap-3 py-3.5 px-3 md:px-9 md:min-w-72 cursor-pointer ${isActive ? 'bg-[#F2F3FF] border-r-4 border-primary' : ''}`}>
+                    <img className='min-w-5' src={assets.list_icon} alt='' />
+                    <p className='hidden md:block'>Danh sách tin tức</p>
+                  </NavLink>
                 <NavLink 
                   to={'/add-news'} 
                   className={({ isActive }) => `flex items-center gap-3 py-3.5 px-3 md:px-9 md:min-w-72 cursor-pointer ${isActive ? 'bg-[#F2F3FF] border-r-4 border-primary' : ''}`}>
