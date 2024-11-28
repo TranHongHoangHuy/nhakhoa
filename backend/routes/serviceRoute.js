@@ -1,8 +1,15 @@
-import express from 'express';
-import { listFeedbackByServiceId, serviceList,newList, serviceDetail } from '../controllers/serviceController.js';
+import express from "express";
+import {
+  listFeedbackByServiceId,
+  serviceList,
+  newList,
+  serviceDetail,
+  fbList,
+  editFeedback,
+} from "../controllers/serviceController.js";
 const serviceRouter = express.Router();
 
-serviceRouter.get('/createTable-service', async (req, res) => {
+serviceRouter.get("/createTable-service", async (req, res) => {
   const sql = `
     CREATE TABLE IF NOT EXISTS services (
       id INT AUTO_INCREMENT PRIMARY KEY,
@@ -16,14 +23,14 @@ serviceRouter.get('/createTable-service', async (req, res) => {
 
   try {
     await req.app.locals.db.execute(sql);
-    res.send('Bảng services đã được tạo hoặc đã tồn tại');
+    res.send("Bảng services đã được tạo hoặc đã tồn tại");
   } catch (err) {
     console.error(err);
-    res.status(500).send('Đã xảy ra lỗi khi tạo bảng');
+    res.status(500).send("Đã xảy ra lỗi khi tạo bảng");
   }
 });
 
-serviceRouter.get('/createTable-news', async (req, res) => {
+serviceRouter.get("/createTable-news", async (req, res) => {
   const sql = `
     CREATE TABLE IF NOT EXISTS news (
       id INT AUTO_INCREMENT PRIMARY KEY,
@@ -36,14 +43,14 @@ serviceRouter.get('/createTable-news', async (req, res) => {
 
   try {
     await req.app.locals.db.execute(sql);
-    res.send('Bảng services đã được tạo hoặc đã tồn tại');
+    res.send("Bảng services đã được tạo hoặc đã tồn tại");
   } catch (err) {
     console.error(err);
-    res.status(500).send('Đã xảy ra lỗi khi tạo bảng');
+    res.status(500).send("Đã xảy ra lỗi khi tạo bảng");
   }
 });
 
-serviceRouter.get('/createTable-feedbacks', async (req, res) => {
+serviceRouter.get("/createTable-feedbacks", async (req, res) => {
   const sql = `
     CREATE TABLE IF NOT EXISTS feedbacks (
       id INT AUTO_INCREMENT PRIMARY KEY,
@@ -57,18 +64,18 @@ serviceRouter.get('/createTable-feedbacks', async (req, res) => {
 
   try {
     await req.app.locals.db.execute(sql);
-    res.send('Bảng services đã được tạo hoặc đã tồn tại');
+    res.send("Bảng services đã được tạo hoặc đã tồn tại");
   } catch (err) {
     console.error(err);
-    res.status(500).send('Đã xảy ra lỗi khi tạo bảng');
+    res.status(500).send("Đã xảy ra lỗi khi tạo bảng");
   }
 });
 
-
-serviceRouter.get("/list", serviceList)
-serviceRouter.get("/newlist", newList)
-serviceRouter.get("/detail", serviceDetail)
-serviceRouter.get("/feedbacks", listFeedbackByServiceId)
-
+serviceRouter.get("/list", serviceList);
+serviceRouter.get("/newlist", newList);
+serviceRouter.get("/detail", serviceDetail);
+serviceRouter.get("/fblist", fbList);
+serviceRouter.get("/feedbacks", listFeedbackByServiceId);
+serviceRouter.put("/edit-feedback", editFeedback);
 
 export default serviceRouter;

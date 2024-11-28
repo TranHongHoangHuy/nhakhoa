@@ -16,6 +16,7 @@ import earning_icon from "./earning_icon.svg";
 import patients_icon from "./patients_icon.svg";
 import complete_icon from "./Complete_Symbol-512.webp";
 import money_cash_icon from "./cash_icon.svg";
+import feedback_icon from "./feedback.svg";
 
 export const assets = {
   add_icon,
@@ -29,6 +30,7 @@ export const assets = {
   upload_area,
   home_icon,
   patients_icon,
+  feedback_icon,
   people_icon,
   list_icon,
   tick_icon,
