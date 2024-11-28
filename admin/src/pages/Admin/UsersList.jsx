@@ -107,7 +107,7 @@ const UsersList = () => {
   ];
 
   return (
-    <div className="m-5">
+    <div className="m-5 w-full">
       <DataTable
         title="Danh sách bệnh nhân"
         columns={columns}
