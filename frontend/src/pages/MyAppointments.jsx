@@ -271,6 +271,21 @@ const MyAppointments = () => {
               style: "currency",
               currency: "VND",
             }).format(item.amount);
+            const appointmentDateTime = new Date(item.slot_date);
+            appointmentDateTime.setHours(
+              item.slot_time.split(":")[0],
+              item.slot_time.split(":")[1]
+            );
+            const now = new Date();
+            console.log("slot_date:", item.slot_date);
+            console.log("slot_time:", item.slot_time);
+            console.log("appointmentDateTime:", appointmentDateTime);
+            console.log("now:", now);
+            console.log(
+              "appointmentDateTime >= now:",
+              appointmentDateTime >= now
+            );
+
             return (
               <div
                 key={index}
@@ -409,7 +424,7 @@ const MyAppointments = () => {
                   {item.payment === 0 &&
                     !item.cancelled &&
                     !item.isCompleted &&
-                    new Date(item.slot_date) >= new Date() && (
+                    appointmentDateTime >= now && (
                       <button
                         onClick={() => cancelAppointment(item.appointment_id)}
                         className="text-[#696969] sm:min-w-48 py-2 border rounded hover:bg-red-600 hover:text-white transition-all duration-300"
@@ -420,7 +435,6 @@ const MyAppointments = () => {
                           : "Hủy lịch hẹn"}
                       </button>
                     )}
-
                   {item.cancelled === 1 && !item.isCompleted && (
                     <button className="sm:min-w-48 py-2 border border-red-500 rounded text-red-500">
                       Lịch hẹn đã hủy
@@ -428,8 +442,8 @@ const MyAppointments = () => {
                   )}
                   {item.isConfirm ? null : item.payment === 1 ||
                     item.cancelled === 1 ||
-                    item.isCompleted === 1 ? null : new Date(item.slot_date) >=
-                    new Date() ? (
+                    item.isCompleted === 1 ? null : appointmentDateTime >=
+                    now ? (
                     <button
                       onClick={() =>
                         item.isEdit
@@ -441,7 +455,6 @@ const MyAppointments = () => {
                       {item.isEdit ? "Hủy thay đổi" : "Thay đổi"}
                     </button>
                   ) : null}
-
                   {item.isEdit && (
                     <button
                       onClick={() => editAppointment(index)}
@@ -455,13 +468,12 @@ const MyAppointments = () => {
                         : "Lưu"}
                     </button>
                   )}
-
                   {/* Thêm nút thanh toán MoMo */}
                   {item.payment === 0 &&
                     item.isCompleted !== 1 &&
                     item.cancelled !== 1 &&
                     item.isConfirm === 1 &&
-                    new Date(item.slot_date) >= new Date() && (
+                    appointmentDateTime >= now && (
                       <button
                         onClick={() => initiatePayment(item.appointment_id)} // gọi hàm thanh toán MoMo
                         className="bg-white text-[#800080] border  sm:min-w-48 py-2 rounded hover:bg-[#800080] hover:text-white transition-all duration-300"
@@ -469,7 +481,7 @@ const MyAppointments = () => {
                         Thanh toán MoMo
                       </button>
                     )}
-                  {item.isConfirm === 0 && (
+                  {item.isConfirm === 0 && !item.cancelled && (
                     <button className="sm:min-w-48 py-2 border border-yellow-500 rounded text-yellow-500">
                       Đang chờ xác nhận
                     </button>

@@ -1,7 +1,7 @@
-import React, { useContext, useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import { AppContext } from '../context/AppContext';
-import axios from 'axios';
+import React, { useContext, useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
+import { AppContext } from "../context/AppContext";
+import axios from "axios";
 
 const ServiceDetails = () => {
   const { id } = useParams();
@@ -10,12 +10,21 @@ const ServiceDetails = () => {
 
   const service = services.find((service) => service.id === parseInt(id));
 
+  const formatCurrency = (value) =>
+    new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND",
+    }).format(value);
+
   useEffect(() => {
     const getFeedbacks = async () => {
       try {
-        const { data } = await axios.get(backendUrl + '/api/service/feedbacks', {
-          params: { serviceId: id },
-        });
+        const { data } = await axios.get(
+          backendUrl + "/api/service/feedbacks",
+          {
+            params: { serviceId: id },
+          }
+        );
         if (data.success) {
           setFeedbacks(data.feedbacks);
         } else {
@@ -36,7 +45,9 @@ const ServiceDetails = () => {
     return Array(rate)
       .fill(0)
       .map((_, i) => (
-        <span key={i} className="star-icon">&#9733;</span>
+        <span key={i} className="star-icon">
+          &#9733;
+        </span>
       ));
   };
 
@@ -46,20 +57,22 @@ const ServiceDetails = () => {
 
       <div className="service-info">
         <div className="service-image">
-          <img
-            src={service.image}
-            alt={service.title}
-          />
+          <img src={service.image} alt={service.title} />
         </div>
 
         <div className="service-details">
           <p className="service-shortdes">{service.shortdes}</p>
           <div className="description">
-            <p><strong>Mô tả:</strong></p>
+            <p>
+              <strong>Mô tả:</strong>
+            </p>
             <div dangerouslySetInnerHTML={{ __html: service.description }} />
           </div>
           <div className="price">
-            <p><strong>Giá: </strong>{service.price} VND</p>
+            <p>
+              <strong>Giá: </strong>
+              {formatCurrency(service.price)}
+            </p>
           </div>
         </div>
       </div>
@@ -69,13 +82,21 @@ const ServiceDetails = () => {
         {feedbacks.length > 0 ? (
           feedbacks.map((feedback) => (
             <div key={feedback.id} className="feedback-item">
-              <img src={feedback.image} alt={feedback.name} className="feedback-avatar" />
+              <img
+                src={feedback.image}
+                alt={feedback.name}
+                className="feedback-avatar"
+              />
               <div className="feedback-content">
                 <div className="feedback-header">
                   <p className="feedback-name">{feedback.name}</p>
-                  <span className="feedback-date">{new Date(feedback.date).toLocaleDateString()}</span>
+                  <span className="feedback-date">
+                    {new Date(feedback.date).toLocaleDateString()}
+                  </span>
                 </div>
-                <div className="feedback-stars">{renderStars(feedback.rate)}</div>
+                <div className="feedback-stars">
+                  {renderStars(feedback.rate)}
+                </div>
                 <p className="feedback-comment">{feedback.comment}</p>
               </div>
             </div>
@@ -86,11 +107,7 @@ const ServiceDetails = () => {
       </div>
 
       <div className="back-button">
-        <button
-          onClick={() => window.history.back()}
-        >
-          Quay lại
-        </button>
+        <button onClick={() => window.history.back()}>Quay lại</button>
       </div>
 
       <style jsx>{`
@@ -102,7 +119,7 @@ const ServiceDetails = () => {
           max-width: 1000px;
           margin: auto;
         }
-        
+
         .service-title {
           text-align: center;
           font-size: 2rem;
@@ -125,7 +142,7 @@ const ServiceDetails = () => {
 
         .service-shortdes {
           font-size: 1.125rem;
-          color: #5C5C5C;
+          color: #5c5c5c;
         }
 
         .description {

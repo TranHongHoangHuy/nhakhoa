@@ -2,93 +2,119 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import doctorModel from "../models/doctorModel.js";
 import appointmentModel from "../models/appointmentModel.js";
-import nodemailer from 'nodemailer';
+import nodemailer from "nodemailer";
 
-// API for doctor Login 
+// API for doctor Login
 const loginDoctor = async (req, res) => {
-    try {
-        const { email, password } = req.body;
-        const [user] = await req.app.locals.db.execute('SELECT * FROM doctors WHERE email = ?', [email]);
+  try {
+    const { email, password } = req.body;
+    const [user] = await req.app.locals.db.execute(
+      "SELECT * FROM doctors WHERE email = ?",
+      [email]
+    );
 
-        if (!user.length) {
-            return res.json({ success: false, message: "Thất bại" });
-        }
-
-        const isMatch = await bcrypt.compare(password, user[0].password);
-
-        if (isMatch) {
-            const token = jwt.sign({ id: user[0].id }, process.env.JWT_SECRET);
-            res.json({ success: true, token });
-        } else {
-            res.json({ success: false, message: "Thất bại" });
-        }
-
-    } catch (error) {
-        console.log(error);
-        res.json({ success: false, message: error.message });
+    if (!user.length) {
+      return res.json({ success: false, message: "Thất bại" });
     }
+
+    const isMatch = await bcrypt.compare(password, user[0].password);
+
+    if (isMatch) {
+      const token = jwt.sign({ id: user[0].id }, process.env.JWT_SECRET);
+      res.json({ success: true, token });
+    } else {
+      res.json({ success: false, message: "Thất bại" });
+    }
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: error.message });
+  }
 };
 
 // API to get doctor appointments for doctor panel
 const appointmentsDoctor = async (req, res) => {
-    try {
-        const { docId } = req.body;
-        const [appointments] = await req.app.locals.db.execute('SELECT a.*,b.name patname,c.slot_date,c.slot_time,d.name docname,e.title FROM appointments a left join users b on a.userId = b.id left join slots c on a.slotId = c.id left join doctors d on c.doctor_id = d.id left join services e on a.serviceId = e.id WHERE d.id= ?', [docId]);
+  try {
+    const { docId } = req.body;
+    const [appointments] = await req.app.locals.db.execute(
+      "SELECT a.*,b.name patname,c.slot_date,c.slot_time,d.name docname,e.title FROM appointments a left join users b on a.userId = b.id left join slots c on a.slotId = c.id left join doctors d on c.doctor_id = d.id left join services e on a.serviceId = e.id WHERE d.id= ?",
+      [docId]
+    );
 
-        res.json({ success: true, appointments });
-    } catch (error) {
-        console.log(error);
-        res.json({ success: false, message: error.message });
-    }
+    res.json({ success: true, appointments });
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: error.message });
+  }
 };
-
-
 
 // API to cancel appointment for doctor panel
 const appointmentCancel = async (req, res) => {
-    try {
-        const { appointmentId } = req.body;
+  try {
+    const { appointmentId } = req.body;
 
-        // Lấy thông tin cuộc hẹn
-        const [appointments] = await req.app.locals.db.execute(
-            'SELECT * FROM appointments WHERE id = ?',
-            [appointmentId]
-        );
+    // Lấy thông tin cuộc hẹn
+    const [appointments] = await req.app.locals.db.execute(
+      "SELECT * FROM appointments WHERE id = ?",
+      [appointmentId]
+    );
 
-        if (appointments.length === 0) {
-            return res.json({ success: false, message: 'Cuộc hẹn không được tìm thấy' });
-        }
+    if (appointments.length === 0) {
+      return res.json({
+        success: false,
+        message: "Cuộc hẹn không được tìm thấy",
+      });
+    }
 
-        const { userId, doctor_id, date } = appointments[0];
+    const { userId, doctor_id, date } = appointments[0];
 
-        // Cập nhật trạng thái của cuộc hẹn
-        await req.app.locals.db.execute('UPDATE appointments SET cancelled = 1 WHERE id = ?', [appointmentId]);
-        const { slotId } = appointments[0];
-        await req.app.locals.db.execute("UPDATE slots SET is_booked = 0 WHERE id = ?", [slotId]);
+    // Cập nhật trạng thái của cuộc hẹn
+    await req.app.locals.db.execute(
+      "UPDATE appointments SET cancelled = 1 WHERE id = ?",
+      [appointmentId]
+    );
+    const { slotId } = appointments[0];
+    await req.app.locals.db.execute(
+      "UPDATE slots SET is_booked = 0 WHERE id = ?",
+      [slotId]
+    );
 
-        // Lấy thông tin người dùng và bác sĩ
-        const [users] = await req.app.locals.db.execute("SELECT * FROM users WHERE id = ?", [userId]);
-        const [slots] = await req.app.locals.db.execute("SELECT * FROM slots WHERE id = ?", [slotId]);
-        const [doctors] = await req.app.locals.db.execute("SELECT * FROM doctors WHERE id = ?", [slots[0].doctor_id]);
+    // Lấy thông tin người dùng và bác sĩ
+    const [users] = await req.app.locals.db.execute(
+      "SELECT * FROM users WHERE id = ?",
+      [userId]
+    );
+    const [slots] = await req.app.locals.db.execute(
+      "SELECT * FROM slots WHERE id = ?",
+      [slotId]
+    );
+    const [doctors] = await req.app.locals.db.execute(
+      "SELECT * FROM doctors WHERE id = ?",
+      [slots[0].doctor_id]
+    );
 
-        // Thiết lập và gửi email thông báo hủy
-        const transporter = nodemailer.createTransport({
-            service: 'gmail',
-            auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASS
-            }
-        });
+    // Thiết lập và gửi email thông báo hủy
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
 
-        const mailOptions = {
-            from: '"Nha Khoa Care" <nhakhoa@gmail.com>',
-            to: users[0].email,
-            subject: 'Lịch hẹn hủy bởi bác sĩ',
-            html: `
+    const mailOptions = {
+      from: '"Nha Khoa Care" <nhakhoa@gmail.com>',
+      to: users[0].email,
+      subject: "Lịch hẹn hủy bởi bác sĩ",
+      html: `
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px; background-color: #f9f9f9;">
                     <h2 style="color: #333;">Xin chào ${users[0].name},</h2>
                     <p style="font-size: 16px; line-height: 1.5; color: #555;">
-                        Chúng tôi rất tiếc phải thông báo với bạn rằng cuộc hẹn của bạn với Bác sĩ <strong>${doctors[0].name}</strong> vào ngày <strong>${date.toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })}</strong> đã bị bác sĩ của chúng tôi hủy bỏ.
+                        Chúng tôi rất tiếc phải thông báo với bạn rằng cuộc hẹn của bạn với Bác sĩ <strong>${
+                          doctors[0].name
+                        }</strong> vào ngày <strong>${date.toLocaleDateString(
+        "vi-VN",
+        { timeZone: "Asia/Ho_Chi_Minh" }
+      )}</strong> đã bị bác sĩ của chúng tôi hủy bỏ.
                     </p>
                     <p style="font-size: 16px; line-height: 1.5; color: #555;">
                         Nếu bạn muốn lên lịch lại, vui lòng liên hệ với chúng tôi hoặc truy cập trang web của chúng tôi.
@@ -101,61 +127,80 @@ const appointmentCancel = async (req, res) => {
                     </p>
                 </div>
             `,
-        };
+    };
 
-        await transporter.sendMail(mailOptions);
+    await transporter.sendMail(mailOptions);
 
-        res.json({ success: true, message: 'Thành công' });
-    } catch (error) {
-        console.log(error);
-        res.json({ success: false, message: error.message });
-    }
+    res.json({ success: true, message: "Thành công" });
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: error.message });
+  }
 };
-
 
 // API to mark appointment completed for doctor panel
 const appointmentComplete = async (req, res) => {
-    try {
-        const { appointmentId } = req.body;
+  try {
+    const { appointmentId } = req.body;
 
-        // Lấy thông tin cuộc hẹn
-        const [appointments] = await req.app.locals.db.execute(
-            'SELECT * FROM appointments WHERE id = ?',
-            [appointmentId]
-        );
+    // Lấy thông tin cuộc hẹn
+    const [appointments] = await req.app.locals.db.execute(
+      "SELECT * FROM appointments WHERE id = ?",
+      [appointmentId]
+    );
 
-        if (appointments.length === 0) {
-            return res.json({ success: false, message: 'Cuộc hẹn không được tìm thấy' });
-        }
+    if (appointments.length === 0) {
+      return res.json({
+        success: false,
+        message: "Cuộc hẹn không được tìm thấy",
+      });
+    }
 
-        const { userId, doctor_id, date } = appointments[0];
-        const { slotId } = appointments[0];
-        // Cập nhật trạng thái của cuộc hẹn
-        await req.app.locals.db.execute('UPDATE appointments SET isCompleted = 1 WHERE id = ?', [appointmentId]);
+    const { userId, doctor_id, date } = appointments[0];
+    const { slotId } = appointments[0];
+    // Cập nhật trạng thái của cuộc hẹn
+    await req.app.locals.db.execute(
+      "UPDATE appointments SET isCompleted = 1 WHERE id = ?",
+      [appointmentId]
+    );
 
-        // Lấy thông tin người dùng và bác sĩ
-        const [users] = await req.app.locals.db.execute("SELECT * FROM users WHERE id = ?", [userId]);
-        const [slots] = await req.app.locals.db.execute("SELECT * FROM slots WHERE id = ?", [slotId]);
-        const [doctors] = await req.app.locals.db.execute("SELECT * FROM doctors WHERE id = ?", [slots[0].doctor_id]);
+    // Lấy thông tin người dùng và bác sĩ
+    const [users] = await req.app.locals.db.execute(
+      "SELECT * FROM users WHERE id = ?",
+      [userId]
+    );
+    const [slots] = await req.app.locals.db.execute(
+      "SELECT * FROM slots WHERE id = ?",
+      [slotId]
+    );
+    const [doctors] = await req.app.locals.db.execute(
+      "SELECT * FROM doctors WHERE id = ?",
+      [slots[0].doctor_id]
+    );
 
-        // Thiết lập và gửi email thông báo hoàn tất
-        const transporter = nodemailer.createTransport({
-            service: 'gmail',
-            auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASS
-            }
-        });
+    // Thiết lập và gửi email thông báo hoàn tất
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
 
-        const mailOptions = {
-            from: '"Nha Khoa Care" <nhakhoa@gmail.com>',
-            to: users[0].email,
-            subject: 'Hoàn thành lịch hẹn',
-            html: `
+    const mailOptions = {
+      from: '"Nha Khoa Care" <nhakhoa@gmail.com>',
+      to: users[0].email,
+      subject: "Hoàn thành lịch hẹn",
+      html: `
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px; background-color: #f9f9f9;">
                     <h2 style="color: #333;">Hi ${users[0].name},</h2>
                     <p style="font-size: 16px; line-height: 1.5; color: #555;">
-                       Chúng tôi vui mừng thông báo với bạn rằng cuộc hẹn của bạn với Bác sĩ <strong>${doctors[0].name}</strong> vào ngày <strong>${date.toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })}</strong> đã diễn ra thành công
+                       Chúng tôi vui mừng thông báo với bạn rằng cuộc hẹn của bạn với Bác sĩ <strong>${
+                         doctors[0].name
+                       }</strong> vào ngày <strong>${date.toLocaleDateString(
+        "vi-VN",
+        { timeZone: "Asia/Ho_Chi_Minh" }
+      )}</strong> đã diễn ra thành công
                     </p>
                     <p style="font-size: 16px; line-height: 1.5; color: #555;">
                         Cảm ơn bạn đã lựa chọn dịch vụ của chúng tôi! Nếu bạn có bất kỳ câu hỏi nào hoặc cần hỗ trợ thêm, vui lòng liên hệ với chúng tôi.
@@ -165,119 +210,149 @@ const appointmentComplete = async (req, res) => {
                     </p>
                 </div>
             `,
-        };
+    };
 
-        await transporter.sendMail(mailOptions);
+    await transporter.sendMail(mailOptions);
 
-        res.json({ success: true, message: 'Thành công' });
-    } catch (error) {
-        console.log(error);
-        res.json({ success: false, message: error.message });
-    }
+    res.json({ success: true, message: "Thành công" });
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: error.message });
+  }
 };
-
 
 // API to get all doctors list for Frontend
 const doctorList = async (req, res) => {
-    try {
-        // const [doctors] = await req.app.locals.db.execute('SELECT id, name, speciality, degree, experience, about, available, address, image FROM doctors');
-        //const [doctors] = await req.app.locals.db.execute('SELECT a.id, name, speciality, degree, experience, about, available, address, a.image, GROUP_CONCAT(c.title ORDER BY c.title SEPARATOR ', ') AS services FROM doctors a left join doc_ser b on a.id = b.doctor_id left join services c on b.service_id = c.id GROUP BY a.id, a.name, a.speciality, a.degree, a.experience, a.about, a.available, a.address, a.image;');
-        const [doctors] = await req.app.locals.db.execute("SELECT a.id, name, speciality, degree, experience, about, available, address, a.image, GROUP_CONCAT(c.id ORDER BY c.id SEPARATOR ', ') AS services FROM doctors a LEFT JOIN doc_ser b ON a.id = b.doctor_id LEFT JOIN services c ON b.service_id = c.id GROUP BY a.id, a.name, a.speciality, a.degree, a.experience, a.about, a.available, a.address, a.image;");
-        res.json({ success: true, doctors });
-    } catch (error) {
-        console.log(error);
-        res.json({ success: false, message: error.message });
-    }
+  try {
+    // const [doctors] = await req.app.locals.db.execute('SELECT id, name, speciality, degree, experience, about, available, address, image FROM doctors');
+    //const [doctors] = await req.app.locals.db.execute('SELECT a.id, name, speciality, degree, experience, about, available, address, a.image, GROUP_CONCAT(c.title ORDER BY c.title SEPARATOR ', ') AS services FROM doctors a left join doc_ser b on a.id = b.doctor_id left join services c on b.service_id = c.id GROUP BY a.id, a.name, a.speciality, a.degree, a.experience, a.about, a.available, a.address, a.image;');
+    const [doctors] = await req.app.locals.db.execute(
+      "SELECT a.id, name, speciality, degree, experience, about, available, address, a.image, GROUP_CONCAT(c.id ORDER BY c.id SEPARATOR ', ') AS services FROM doctors a LEFT JOIN doc_ser b ON a.id = b.doctor_id LEFT JOIN services c ON b.service_id = c.id GROUP BY a.id, a.name, a.speciality, a.degree, a.experience, a.about, a.available, a.address, a.image;"
+    );
+    res.json({ success: true, doctors });
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: error.message });
+  }
 };
-
 
 // API to change doctor availablity for Admin and Doctor Panel
 const changeAvailablity = async (req, res) => {
-    try {
-        console.log(req.body)
-        const { docId } = req.body;
-        const [docData] = await req.app.locals.db.execute('SELECT available FROM doctors WHERE id = ?', [docId]);
-        const newAvailability = !docData[0].available;
-        await req.app.locals.db.execute('UPDATE doctors SET available = ? WHERE id = ?', [newAvailability, docId]);
+  try {
+    console.log(req.body);
+    const { docId } = req.body;
+    const [docData] = await req.app.locals.db.execute(
+      "SELECT available FROM doctors WHERE id = ?",
+      [docId]
+    );
+    const newAvailability = !docData[0].available;
+    await req.app.locals.db.execute(
+      "UPDATE doctors SET available = ? WHERE id = ?",
+      [newAvailability, docId]
+    );
 
-        res.json({ success: true, message: 'Tính khả dụng đã thay đổi' });
-    } catch (error) {
-        console.log(error);
-        res.json({ success: false, message: error.message });
-    }
+    res.json({ success: true, message: "Đã thay đổi trạng thái bác sĩ" });
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: error.message });
+  }
 };
-
 
 // API to get doctor profile for  Doctor Panel
 const doctorProfile = async (req, res) => {
-    try {
-        const { docId } = req.body;
-        const [profileData] = await req.app.locals.db.execute('SELECT * FROM doctors WHERE id = ?', [docId]);
+  try {
+    const { docId } = req.body;
+    const [profileData] = await req.app.locals.db.execute(
+      "SELECT * FROM doctors WHERE id = ?",
+      [docId]
+    );
 
-        res.json({ success: true, profileData });
-    } catch (error) {
-        console.log(error);
-        res.json({ success: false, message: error.message });
-    }
+    res.json({ success: true, profileData });
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: error.message });
+  }
 };
-
 
 // API to update doctor profile data from  Doctor Panel
 const updateDoctorProfile = async (req, res) => {
-    try {
-        const { docId, fees, address, available } = req.body;
+  try {
+    const { docId, fees, address, available } = req.body;
 
-        await req.app.locals.db.execute('UPDATE doctors SET fees = ?, address = ?, available = ? WHERE id = ?', [fees, address, available, docId]);
+    await req.app.locals.db.execute(
+      "UPDATE doctors SET fees = ?, address = ?, available = ? WHERE id = ?",
+      [fees, address, available, docId]
+    );
 
-        res.json({ success: true, message: 'Cập nhật thành công' });
-    } catch (error) {
-        console.log(error);
-        res.json({ success: false, message: error.message });
-    }
+    res.json({ success: true, message: "Cập nhật thành công" });
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: error.message });
+  }
 };
-
 
 // API to get dashboard data for doctor panel
 const doctorDashboard = async (req, res) => {
-    try {
-        const { docId } = req.body;
-        const [appointments] = await req.app.locals.db.execute('SELECT a.* FROM appointments a WHERE slotId = ?', [docId]);
+  try {
+    const { docId } = req.body;
+    const [appointments] = await req.app.locals.db.execute(
+      "SELECT a.*,b.name patname,c.slot_date,c.slot_time,d.name docname,e.title FROM appointments a left join users b on a.userId = b.id left join slots c on a.slotId = c.id left join doctors d on c.doctor_id = d.id left join services e on a.serviceId = e.id WHERE d.id= ?",
+      [docId]
+    );
 
-        let earnings = 0;
-        let patients = [];
+    const [totalAmountResult] = await req.app.locals.db.execute(
+      `SELECT 
+      SUM(a.amount) AS totalAmount
+    FROM 
+      appointments a
+    LEFT JOIN 
+      slots c ON a.slotId = c.id
+    LEFT JOIN 
+      doctors d ON c.doctor_id = d.id
+    WHERE 
+      d.id = ? 
+      AND a.cancelled = 0 
+      AND a.isCompleted = 1`,
+      [docId]
+    );
+    const totalAmount = totalAmountResult[0].totalAmount || 0;
 
-        appointments.forEach((item) => {
-            if (item.isCompleted || item.payment) {
-                earnings += item.amount;
-            }
-            if (!patients.includes(item.userId)) {
-                patients.push(item.userId);
-            }
-        });
+    const dashData = {
+      totalAmount: totalAmount,
+      appointments: appointments.length,
+      latestAppointments: appointments.reverse(),
+    };
 
-        const dashData = {
-            earnings,
-            appointments: appointments.length,
-            patients: patients.length,
-            latestAppointments: appointments.reverse()
-        };
-
-        res.json({ success: true, dashData });
-    } catch (error) {
-        console.log(error);
-        res.json({ success: false, message: error.message });
-    }
+    res.json({ success: true, dashData });
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: error.message });
+  }
 };
 
-
+const statisical = async (req, res) => {
+  try {
+    const { docId } = req.body;
+    console.log("docId:", docId);
+    const [statisical] = await req.app.locals.db.execute(
+      "SELECT DATE_FORMAT(a.date, '%Y-%m') AS month, SUM(a.amount) AS total_revenue FROM appointments a LEFT JOIN slots c ON a.slotId = c.id LEFT JOIN doctors d ON c.doctor_id = d.id WHERE d.id = ? AND a.cancelled = 0 AND a.isCompleted = 1 GROUP BY DATE_FORMAT(a.date, '%Y-%m') ORDER BY month DESC",
+      [docId]
+    );
+    res.json({ success: true, statisical });
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: error.message });
+  }
+};
 export {
-    loginDoctor,
-    appointmentsDoctor,
-    appointmentCancel,
-    doctorList,
-    changeAvailablity,
-    appointmentComplete,
-    doctorDashboard,
-    doctorProfile,
-    updateDoctorProfile
-}
+  loginDoctor,
+  statisical,
+  appointmentsDoctor,
+  appointmentCancel,
+  doctorList,
+  changeAvailablity,
+  appointmentComplete,
+  doctorDashboard,
+  doctorProfile,
+  updateDoctorProfile,
+};

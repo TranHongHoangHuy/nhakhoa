@@ -1,9 +1,20 @@
-import express from 'express';
-import { loginDoctor, appointmentsDoctor, appointmentCancel, doctorList, changeAvailablity, appointmentComplete, doctorDashboard, doctorProfile, updateDoctorProfile } from '../controllers/doctorController.js';
-import authDoctor from '../middleware/authDoctor.js';
+import express from "express";
+import {
+  loginDoctor,
+  statisical,
+  appointmentsDoctor,
+  appointmentCancel,
+  doctorList,
+  changeAvailablity,
+  appointmentComplete,
+  doctorDashboard,
+  doctorProfile,
+  updateDoctorProfile,
+} from "../controllers/doctorController.js";
+import authDoctor from "../middleware/authDoctor.js";
 const doctorRouter = express.Router();
 
-doctorRouter.get('/createTable', async (req, res) => {
+doctorRouter.get("/createTable", async (req, res) => {
   const sql = `
     CREATE TABLE IF NOT EXISTS doctors (
       id INT AUTO_INCREMENT PRIMARY KEY,
@@ -23,14 +34,14 @@ doctorRouter.get('/createTable', async (req, res) => {
 
   try {
     await req.app.locals.db.execute(sql);
-    res.send('Bảng doctors đã được tạo hoặc đã tồn tại');
+    res.send("Bảng doctors đã được tạo hoặc đã tồn tại");
   } catch (err) {
     console.error(err);
-    res.status(500).send('Đã xảy ra lỗi khi tạo bảng');
+    res.status(500).send("Đã xảy ra lỗi khi tạo bảng");
   }
 });
 
-doctorRouter.get('/createTable-slot', async (req, res) => {
+doctorRouter.get("/createTable-slot", async (req, res) => {
   const sql = `
     CREATE TABLE IF NOT EXISTS slots (
       id INT AUTO_INCREMENT PRIMARY KEY,
@@ -43,14 +54,14 @@ doctorRouter.get('/createTable-slot', async (req, res) => {
 
   try {
     await req.app.locals.db.execute(sql);
-    res.send('Bảng doctors đã được tạo hoặc đã tồn tại');
+    res.send("Bảng doctors đã được tạo hoặc đã tồn tại");
   } catch (err) {
     console.error(err);
-    res.status(500).send('Đã xảy ra lỗi khi tạo bảng');
+    res.status(500).send("Đã xảy ra lỗi khi tạo bảng");
   }
 });
 
-doctorRouter.get('/createTable-docser', async (req, res) => {
+doctorRouter.get("/createTable-docser", async (req, res) => {
   const sql = `
     CREATE TABLE IF NOT EXISTS doc_ser (
       id INT AUTO_INCREMENT PRIMARY KEY,
@@ -61,14 +72,14 @@ doctorRouter.get('/createTable-docser', async (req, res) => {
 
   try {
     await req.app.locals.db.execute(sql);
-    res.send('Bảng doctors đã được tạo hoặc đã tồn tại');
+    res.send("Bảng doctors đã được tạo hoặc đã tồn tại");
   } catch (err) {
     console.error(err);
-    res.status(500).send('Đã xảy ra lỗi khi tạo bảng');
+    res.status(500).send("Đã xảy ra lỗi khi tạo bảng");
   }
 });
 
-doctorRouter.get('/createTable-service', async (req, res) => {
+doctorRouter.get("/createTable-service", async (req, res) => {
   const sql = `
     CREATE TABLE IF NOT EXISTS services (
       id INT AUTO_INCREMENT PRIMARY KEY,
@@ -81,21 +92,22 @@ doctorRouter.get('/createTable-service', async (req, res) => {
 
   try {
     await req.app.locals.db.execute(sql);
-    res.send('Bảng services đã được tạo hoặc đã tồn tại');
+    res.send("Bảng services đã được tạo hoặc đã tồn tại");
   } catch (err) {
     console.error(err);
-    res.status(500).send('Đã xảy ra lỗi khi tạo bảng');
+    res.status(500).send("Đã xảy ra lỗi khi tạo bảng");
   }
 });
 
-doctorRouter.post("/login", loginDoctor)
-doctorRouter.post("/cancel-appointment", authDoctor, appointmentCancel)
-doctorRouter.get("/appointments", authDoctor, appointmentsDoctor)
-doctorRouter.get("/list", doctorList)
-doctorRouter.post("/change-availability", authDoctor, changeAvailablity)
-doctorRouter.post("/complete-appointment", authDoctor, appointmentComplete)
-doctorRouter.get("/dashboard", authDoctor, doctorDashboard)
-doctorRouter.get("/profile", authDoctor, doctorProfile)
-doctorRouter.post("/update-profile", authDoctor, updateDoctorProfile)
+doctorRouter.post("/login", loginDoctor);
+doctorRouter.post("/cancel-appointment", authDoctor, appointmentCancel);
+doctorRouter.get("/appointments", authDoctor, appointmentsDoctor);
+doctorRouter.get("/list", doctorList);
+doctorRouter.get("/monthly", authDoctor, statisical);
+doctorRouter.post("/change-availability", authDoctor, changeAvailablity);
+doctorRouter.post("/complete-appointment", authDoctor, appointmentComplete);
+doctorRouter.get("/dashboard", authDoctor, doctorDashboard);
+doctorRouter.get("/profile", authDoctor, doctorProfile);
+doctorRouter.post("/update-profile", authDoctor, updateDoctorProfile);
 
 export default doctorRouter;

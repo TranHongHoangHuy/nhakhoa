@@ -94,12 +94,10 @@ const addSlotsFromExcel = async (req, res) => {
     console.log(data);
 
     if (data.length === 0) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "Không có dữ liệu nào được tìm thấy trong tập tin",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "Không có dữ liệu nào được tìm thấy trong tập tin",
+      });
     }
 
     // Lọc và kiểm tra dữ liệu trong tệp
@@ -884,7 +882,7 @@ const adminDashboard = async (req, res) => {
       "SELECT * FROM appointments"
     );
     const [totalAmountResult] = await req.app.locals.db.execute(
-      "SELECT SUM(amount) AS totalAmount FROM appointments"
+      "SELECT SUM(amount) AS totalAmount FROM appointments WHERE cancelled = 0 AND isCompleted = 1 "
     );
     const totalAmount = totalAmountResult[0].totalAmount || 0;
 
@@ -933,12 +931,10 @@ const addSlot = async (req, res) => {
     );
 
     if (existingSlot.length > 0) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "Slot đã tồn tại cho bác sĩ vào thời gian này",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "Slot đã tồn tại cho bác sĩ vào thời gian này",
+      });
     }
 
     // Insert new slot into the database
@@ -952,12 +948,10 @@ const addSlot = async (req, res) => {
       .json({ success: true, message: "Thêm lịch hẹn thành công" });
   } catch (error) {
     console.error("Error adding slot:", error);
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "Đã xảy ra lỗi. Vui lòng thử lại sau.",
-      });
+    res.status(500).json({
+      success: false,
+      message: "Đã xảy ra lỗi. Vui lòng thử lại sau.",
+    });
   }
 };
 
@@ -1001,12 +995,10 @@ const updateSlot = async (req, res) => {
     );
 
     if (duplicateSlot.length > 0) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "Slot đã tồn tại cho bác sĩ vào thời gian này",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "Slot đã tồn tại cho bác sĩ vào thời gian này",
+      });
     }
 
     // Update the slot in the database
@@ -1020,12 +1012,10 @@ const updateSlot = async (req, res) => {
       .json({ success: true, message: "Lịch hẹn đã được cập nhật thành công" });
   } catch (error) {
     console.error("Error updating slot:", error);
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "Đã xảy ra lỗi. Vui lòng thử lại sau.",
-      });
+    res.status(500).json({
+      success: false,
+      message: "Đã xảy ra lỗi. Vui lòng thử lại sau.",
+    });
   }
 };
 

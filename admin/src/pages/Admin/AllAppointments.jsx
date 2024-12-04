@@ -1,74 +1,100 @@
-import React, { useEffect, useState } from 'react';
-import { assets } from '../../assets/assets';
-import { useContext } from 'react';
-import { AdminContext } from '../../context/AdminContext';
-import { AppContext } from '../../context/AppContext';
+import React, { useEffect, useState } from "react";
+import { assets } from "../../assets/assets";
+import { useContext } from "react";
+import { AdminContext } from "../../context/AdminContext";
+import { AppContext } from "../../context/AppContext";
 
 const AllAppointments = () => {
-  const { aToken, appointments, cancelAppointment, getAllAppointments, completeAppointment,confirmAppointment } = useContext(AdminContext);
+  const {
+    aToken,
+    appointments,
+    cancelAppointment,
+    getAllAppointments,
+    completeAppointment,
+    confirmAppointment,
+  } = useContext(AdminContext);
   const { calculateAge, currency } = useContext(AppContext);
-  
+
   useEffect(() => {
     if (aToken) {
       getAllAppointments();
     }
   }, [aToken]);
-  
-  const [searchQuery, setSearchQuery] = useState('');
-  const [dateQuery, setDateQuery] = useState('');
-  const [amountQuery, setAmountQuery] = useState('');
-  const [statusQuery, setStatusQuery] = useState('');
-  const [filteredAppointments, setFilteredAppointments] = useState(appointments);
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [dateQuery, setDateQuery] = useState("");
+  const [amountQuery, setAmountQuery] = useState("");
+  const [statusQuery, setStatusQuery] = useState("");
+  const [filteredAppointments, setFilteredAppointments] =
+    useState(appointments);
 
   // Hàm lọc lịch hẹn theo các trường tìm kiếm
   const filterAppointments = () => {
     let filtered = appointments;
 
     if (searchQuery) {
-      filtered = filtered.filter((appointment) =>
-        appointment.patname.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        appointment.docname.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        appointment.title.toLowerCase().includes(searchQuery.toLowerCase())
+      filtered = filtered.filter(
+        (appointment) =>
+          appointment.patname
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase()) ||
+          appointment.docname
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase()) ||
+          appointment.title.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
     if (dateQuery) {
       filtered = filtered.filter((appointment) => {
-        const formattedDate = new Date(appointment.slot_date).toLocaleDateString('en-GB'); // Định dạng ngày theo kiểu dd-mm-yyyy
+        const formattedDate = new Date(
+          appointment.slot_date
+        ).toLocaleDateString("en-GB"); // Định dạng ngày theo kiểu dd-mm-yyyy
         return formattedDate.includes(dateQuery); // Kiểm tra nếu ngày chứa từ khóa
       });
     }
 
     if (amountQuery) {
-      filtered = filtered.filter((appointment) =>
-        appointment.amount.toString().includes(amountQuery) // Kiểm tra nếu số tiền chứa từ khóa
+      filtered = filtered.filter(
+        (appointment) => appointment.amount.toString().includes(amountQuery) // Kiểm tra nếu số tiền chứa từ khóa
       );
     }
 
     if (statusQuery) {
       const statusFilter = statusQuery.toLowerCase();
       filtered = filtered.filter((appointment) => {
-        const isCompleted = appointment.isCompleted === 1 ? 'hoàn thành' : 'chưa hoàn thành';
+        const isCompleted =
+          appointment.isCompleted === 1 ? "hoàn thành" : "chưa hoàn thành";
         return isCompleted.includes(statusFilter);
       });
     }
-  
-  setFilteredAppointments(filtered);
-  };  
+
+    setFilteredAppointments(filtered);
+  };
   useEffect(() => {
     filterAppointments(); // Lọc lại khi danh sách appointments hoặc các query tìm kiếm thay đổi
   }, [appointments, searchQuery, dateQuery, amountQuery, statusQuery]);
 
-
   const slotDateFormat = (dateSlot) => {
-    const date = new Date(dateSlot)
-    const formattedDate = `${date.getDate().toString().padStart(2, '0')}-${(date.getMonth() + 1).toString().padStart(2, '0')}`
-    return formattedDate
-  }
+    const date = new Date(dateSlot);
+    const formattedDate = `${date.getDate().toString().padStart(2, "0")}-${(
+      date.getMonth() + 1
+    )
+      .toString()
+      .padStart(2, "0")}`;
+    return formattedDate;
+  };
+
+  // Format giá
+  const formatCurrency = (value) =>
+    new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND",
+    }).format(value);
 
   return (
-    <div className='w-full max-w-6xl m-5'>
-      <p className='mb-3 text-lg font-medium'>Danh sách lịch hẹn</p>
+    <div className="w-full max-w-6xl m-5">
+      <p className="mb-3 text-lg font-medium">Danh sách lịch hẹn</p>
 
       {/* Thêm các trường tìm kiếm */}
       <div className="mb-4">
@@ -114,7 +140,7 @@ const AllAppointments = () => {
         />
       </div>
 
-      <div className='bg-white border rounded text-sm max-h-[80vh] overflow-y-scroll'>
+      <div className="bg-white border rounded text-sm max-h-[80vh] overflow-y-scroll">
         <div className="overflow-x-auto">
           <table className="min-w-full table-auto border-collapse">
             <thead className="bg-gray-100">
@@ -132,14 +158,21 @@ const AllAppointments = () => {
             <tbody>
               {filteredAppointments.map((item, index) => (
                 <tr className="hover:bg-gray-50" key={index}>
-                  <td className="px-6 py-3 border-b text-center">{index + 1}</td>
+                  <td className="px-6 py-3 border-b text-center">
+                    {index + 1}
+                  </td>
                   <td className="px-6 py-3 border-b text-left">
                     <div className="flex items-center gap-2">
                       <p>{item.patname}</p>
                     </div>
                   </td>
                   <td className="px-6 py-3 border-b text-left">
-                    {slotDateFormat(item.slot_date).slice(0, 10).split('-').reverse().join('-')} {item.slot_time}
+                    {slotDateFormat(item.slot_date)
+                      .slice(0, 10)
+                      .split("-")
+                      .reverse()
+                      .join("-")}{" "}
+                    {item.slot_time}
                   </td>
                   <td className="px-6 py-3 border-b text-left">
                     <div className="flex items-center gap-2">
@@ -151,15 +184,26 @@ const AllAppointments = () => {
                       <p>{item.title}</p>
                     </div>
                   </td>
-                  <td className="px-6 py-3 border-b text-left">{item.amount}</td>
                   <td className="px-6 py-3 border-b text-left">
-                    {item.isConfirm === 0 ? 'Chưa xác nhận' : item.isCompleted === 0 ? 'Chưa hoàn thành' : 'Đã hoàn thành'}
+                    {formatCurrency(item.amount)}
+                  </td>
+                  <td className="px-6 py-3 border-b text-left">
+                    {item.isConfirm === 0
+                      ? "Chưa xác nhận"
+                      : item.isCompleted === 0
+                      ? "Chưa hoàn thành"
+                      : "Đã hoàn thành"}
+                    {item.payment === 1 && item.isCompleted === 0
+                      ? "/Đã thanh toán"
+                      : ""}
                   </td>
                   <td className="px-6 py-3 border-b text-center">
                     {item.cancelled ? (
                       <p className="text-red-400 text-xs font-medium">Hủy</p>
                     ) : item.isCompleted ? (
-                      <p className="text-green-500 text-xs font-medium">Hoàn thành</p>
+                      <p className="text-green-500 text-xs font-medium">
+                        Hoàn thành
+                      </p>
                     ) : (
                       <div className="flex justify-center items-center">
                         <img
@@ -168,26 +212,27 @@ const AllAppointments = () => {
                           src={assets.cancel_icon}
                           alt="Cancel"
                         />
-                        {item.isConfirm === 0 ? <img
-                          onClick={() => confirmAppointment(item.id)}
-                          className="w-6 h-6 cursor-pointer mx-1"
-                          src={assets.complete_icon} // Thay đổi thành icon hoàn thành của bạn
-                          alt="confirm"
-                        /> : <img
-                          onClick={() => completeAppointment(item.id)}
-                          className="w-6 h-6 cursor-pointer mx-1"
-                          src={assets.complete_icon}
-                          alt="Complete"
-                        />}
-
-
+                        {item.isConfirm === 0 ? (
+                          <img
+                            onClick={() => confirmAppointment(item.id)}
+                            className="w-6 h-6 cursor-pointer mx-1"
+                            src={assets.complete_icon} // Thay đổi thành icon hoàn thành của bạn
+                            alt="confirm"
+                          />
+                        ) : (
+                          <img
+                            onClick={() => completeAppointment(item.id)}
+                            className="w-6 h-6 cursor-pointer mx-1"
+                            src={assets.complete_icon}
+                            alt="Complete"
+                          />
+                        )}
                       </div>
                     )}
                   </td>
                 </tr>
               ))}
             </tbody>
-
           </table>
         </div>
       </div>

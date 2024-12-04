@@ -1,80 +1,161 @@
-import React from 'react'
-import { useContext } from 'react'
-import { useEffect } from 'react'
-import { DoctorContext } from '../../context/DoctorContext'
-import { assets } from '../../assets/assets'
-import { AppContext } from '../../context/AppContext'
+import React from "react";
+import { useContext } from "react";
+import { useEffect } from "react";
+import { DoctorContext } from "../../context/DoctorContext";
+import { assets } from "../../assets/assets";
+import { AppContext } from "../../context/AppContext";
+import { Bar } from "react-chartjs-2"; // Import Bar chart component from Chart.js
+import {
+  Chart as ChartJS,
+  Title,
+  Tooltip,
+  Legend,
+  BarElement,
+  CategoryScale,
+  LinearScale,
+} from "chart.js";
+
+// Registering the necessary components for Chart.js
+ChartJS.register(
+  Title,
+  Tooltip,
+  Legend,
+  BarElement,
+  CategoryScale,
+  LinearScale
+);
 
 const DoctorDashboard = () => {
-
-  const { dToken, dashData, getDashData, cancelAppointment, completeAppointment } = useContext(DoctorContext)
-  const { slotDateFormat, currency } = useContext(AppContext)
-
+  const { dToken, dashData, getDashData, getMonthly, statisical } =
+    useContext(DoctorContext);
+  const { slotDateFormat, currency } = useContext(AppContext);
 
   useEffect(() => {
-
     if (dToken) {
-      getDashData()
+      getMonthly();
+      getDashData();
     }
+  }, [dToken]);
 
-  }, [dToken])
+  // Create an array for months as 'Tháng 1', 'Tháng 2', ..., 'Tháng 12'
+  const months = [
+    "Tháng 1",
+    "Tháng 2",
+    "Tháng 3",
+    "Tháng 4",
+    "Tháng 5",
+    "Tháng 6",
+    "Tháng 7",
+    "Tháng 8",
+    "Tháng 9",
+    "Tháng 10",
+    "Tháng 11",
+    "Tháng 12",
+  ];
 
-  return dashData && (
-    <div className='m-5'>
+  // Initialize all months' data as 0
+  let revenueData = new Array(12).fill(0);
 
-      <div className='flex flex-wrap gap-3'>
-        <div className='flex items-center gap-2 bg-white p-4 min-w-52 rounded border-2 border-gray-100 cursor-pointer hover:scale-105 transition-all'>
-          <img className='w-14' src={assets.earning_icon} alt="" />
-          <div>
-            <p className='text-xl font-semibold text-gray-600'>{currency} {dashData.earnings}</p>
-            <p className='text-gray-400'>Earnings</p>
-          </div>
-        </div>
-        <div className='flex items-center gap-2 bg-white p-4 min-w-52 rounded border-2 border-gray-100 cursor-pointer hover:scale-105 transition-all'>
-          <img className='w-14' src={assets.appointments_icon} alt="" />
-          <div>
-            <p className='text-xl font-semibold text-gray-600'>{dashData.appointments}</p>
-            <p className='text-gray-400'>Appointments</p>
-          </div>
-        </div>
-        <div className='flex items-center gap-2 bg-white p-4 min-w-52 rounded border-2 border-gray-100 cursor-pointer hover:scale-105 transition-all'>
-          <img className='w-14' src={assets.patients_icon} alt="" />
-          <div>
-            <p className='text-xl font-semibold text-gray-600'>{dashData.patients}</p>
-            <p className='text-gray-400'>Patients</p></div>
-        </div>
-      </div>
+  // Fill in the revenue data for the months that have data
+  statisical.forEach((item) => {
+    const monthIndex = parseInt(item.month.split("-")[1], 10) - 1; // Get the month index from 'YYYY-MM'
+    revenueData[monthIndex] = item.total_revenue;
+  });
 
-      <div className='bg-white'>
-        <div className='flex items-center gap-2.5 px-4 py-4 mt-10 rounded-t border'>
-          <img src={assets.list_icon} alt="" />
-          <p className='font-semibold'>Latest Bookings</p>
-        </div>
+  const chartData = {
+    labels: months, // Use the month labels 'Tháng 1', 'Tháng 2', ..., 'Tháng 12'
+    datasets: [
+      {
+        label: "Doanh thu (VND)", // Label for the chart
+        data: revenueData, // Revenue data for each month
+        backgroundColor: "rgba(75, 192, 192, 0.2)", // Color for bars
+        borderColor: "rgba(75, 192, 192, 1)", // Border color for bars
+        borderWidth: 1,
+      },
+    ],
+  };
 
-        <div className='pt-4 border border-t-0'>
-          {dashData.latestAppointments.slice(0, 5).map((item, index) => (
-            <div className='flex items-center px-6 py-3 gap-3 hover:bg-gray-100' key={index}>
-              <img className='rounded-full w-10' src={item.userData.image} alt="" />
-              <div className='flex-1 text-sm'>
-                <p className='text-gray-800 font-medium'>{item.userData.name}</p>
-                <p className='text-gray-600 '>Booking on {slotDateFormat(item.slotDate)}</p>
-              </div>
-              {item.cancelled
-                ? <p className='text-red-400 text-xs font-medium'>Cancelled</p>
-                : item.isCompleted
-                  ? <p className='text-green-500 text-xs font-medium'>Completed</p>
-                  : <div className='flex'>
-                    <img onClick={() => cancelAppointment(item._id)} className='w-10 cursor-pointer' src={assets.cancel_icon} alt="" />
-                    <img onClick={() => completeAppointment(item._id)} className='w-10 cursor-pointer' src={assets.tick_icon} alt="" />
-                  </div>
-              }
+  return (
+    dashData && (
+      <div className="m-5 w-full">
+        <div className="flex flex-wrap gap-3">
+          <div className="flex items-center gap-2 bg-white p-4 min-w-52 rounded border-2 border-gray-100 cursor-pointer hover:scale-105 transition-all">
+            <img className="w-14" src={assets.appointments_icon} alt="" />
+            <div>
+              <p className="text-xl font-semibold text-gray-600">
+                {dashData.appointments}
+              </p>
+              <p className="text-gray-400">Lịch hẹn</p>
             </div>
-          ))}
+          </div>
+          <div className="flex items-center gap-2 bg-white p-4 min-w-52 rounded border-2 border-gray-100 cursor-pointer hover:scale-105 transition-all">
+            <img className="w-14" src={assets.earning_icon} alt="" />
+            <div>
+              <p className="text-xl font-semibold text-gray-600">
+                {new Intl.NumberFormat("vi-VN", {
+                  style: "currency",
+                  currency: "VND",
+                }).format(dashData.totalAmount)}
+              </p>
+              <p className="text-gray-400">Doanh thu</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white p-4 mt-6 rounded">
+          <h2 className="text-lg font-semibold text-gray-600 mb-4">
+            Biểu đồ doanh thu theo tháng
+          </h2>
+          <Bar
+            data={chartData} // Passing the chart data to Bar component
+            options={{
+              responsive: true,
+              plugins: {
+                title: {
+                  display: true,
+                  text: "Doanh thu hàng tháng",
+                },
+              },
+              scales: {
+                x: {
+                  title: {
+                    display: true,
+                    text: "Tháng",
+                  },
+                  ticks: {
+                    callback: (value, index) => {
+                      return [
+                        "1",
+                        "2",
+                        "3",
+                        "4",
+                        "5",
+                        "6",
+                        "7",
+                        "8",
+                        "9",
+                        "10",
+                        "11",
+                        "12",
+                      ][index]; // Nhãn cụ thể
+                    },
+                    stepSize: 1, // Khoảng cách giữa các nhãn
+                  },
+                },
+                y: {
+                  title: {
+                    display: true,
+                    text: "Doanh thu (VND)",
+                  },
+                  beginAtZero: true,
+                },
+              },
+            }}
+          />
         </div>
       </div>
+    )
+  );
+};
 
-    </div>
-  )
-}
-
-export default DoctorDashboard
+export default DoctorDashboard;
