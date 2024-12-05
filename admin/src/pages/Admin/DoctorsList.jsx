@@ -38,6 +38,12 @@ const DoctorsList = () => {
 
   const columns = [
     {
+      name: "ID",
+      selector: (row) => row.id,
+      sortable: true,
+      width: "5%",
+    },
+    {
       name: "Tên bác sĩ",
       selector: (row) => row.name,
       sortable: true,
