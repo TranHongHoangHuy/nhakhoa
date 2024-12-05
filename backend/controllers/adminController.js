@@ -74,6 +74,101 @@ const downloadFileExcel = async (req, res) => {
   }
 };
 
+// const addSlotsFromExcel = async (req, res) => {
+//   try {
+//     // Kiểm tra tệp đã được tải lên chưa
+//     if (!req.file) {
+//       return res
+//         .status(400)
+//         .json({ success: false, message: "Không có tập tin nào được tải lên" });
+//     }
+
+//     const filePath = path.join("./uploads", req.file.filename);
+//     console.log(filePath);
+
+//     // Đọc tệp Excel
+//     const workbook = XLSX.readFile(filePath);
+//     const sheetName = workbook.SheetNames[0]; // Lấy sheet đầu tiên
+//     const worksheet = workbook.Sheets[sheetName];
+//     const data = XLSX.utils.sheet_to_json(worksheet);
+//     console.log(data);
+
+//     if (data.length === 0) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Không có dữ liệu nào được tìm thấy trong tập tin",
+//       });
+//     }
+
+//     // Lọc và kiểm tra dữ liệu trong tệp
+//     const slots = [];
+//     data.forEach((item) => {
+//       const { doctor_id, slot_date, slot_time } = item;
+
+//       // Kiểm tra các trường bắt buộc
+//       if (!doctor_id || !slot_date || !slot_time) {
+//         return; // Bỏ qua nếu thiếu thông tin
+//       }
+
+//       // Kiểm tra định dạng ngày và giờ
+//       const validDate = /^\d{4}-\d{2}-\d{2}$/.test(slot_date); // YYYY-MM-DD
+//       const validTime = /^\d{2}:\d{2}(:\d{2})?$/.test(slot_time); // HH:MM or HH:MM:SS
+
+//       if (validDate && validTime) {
+//         slots.push({ doctor_id, slot_date, slot_time });
+//       }
+//     });
+
+//     if (slots.length === 0) {
+//       return res
+//         .status(400)
+//         .json({ success: false, message: "Dữ liệu không hợp lệ trong tệp" });
+//     }
+
+//     // Thêm các slot vào cơ sở dữ liệu
+//     for (const slot of slots) {
+//       const { doctor_id, slot_date, slot_time } = slot;
+
+//       // Kiểm tra xem slot đã tồn tại chưa
+//       const [existingSlot] = await req.app.locals.db.execute(
+//         "SELECT * FROM slots WHERE doctor_id = ? AND slot_date = ? AND slot_time = ?",
+//         [doctor_id, slot_date, slot_time]
+//       );
+
+//       if (existingSlot.length > 0) {
+//         return res.json({
+//           success: false,
+//           message: `Đã có chỗ dành cho bác sĩ ${doctor_id} vào ${slot_date} lúc ${slot_time}`,
+//         });
+//       }
+
+//       // Thêm slot vào cơ sở dữ liệu
+//       await req.app.locals.db.execute(
+//         "INSERT INTO slots (doctor_id, slot_date, slot_time) VALUES (?, ?, ?)",
+//         [doctor_id, slot_date, slot_time]
+//       );
+//     }
+
+//     // Xóa file sau khi xử lý
+//     fs.unlink(filePath, (err) => {
+//       if (err) {
+//         console.error("Lỗi khi xóa file:", err);
+//       } else {
+//         console.log("File đã được xóa thành công");
+//       }
+//     });
+
+//     res.json({ success: true, message: "Các slot đã được thêm thành công" });
+//   } catch (error) {
+//     console.log("Lỗi:", error);
+//     res
+//       .status(500)
+//       .json({ success: false, message: "Đã xảy ra lỗi khi xử lý tệp" });
+//   }
+// };
+
+//test addslots
+
 const addSlotsFromExcel = async (req, res) => {
   try {
     // Kiểm tra tệp đã được tải lên chưa
@@ -125,6 +220,9 @@ const addSlotsFromExcel = async (req, res) => {
         .json({ success: false, message: "Dữ liệu không hợp lệ trong tệp" });
     }
 
+    let addedSlotsCount = 0;
+    let skippedSlotsCount = 0;
+
     // Thêm các slot vào cơ sở dữ liệu
     for (const slot of slots) {
       const { doctor_id, slot_date, slot_time } = slot;
@@ -136,10 +234,8 @@ const addSlotsFromExcel = async (req, res) => {
       );
 
       if (existingSlot.length > 0) {
-        return res.json({
-          success: false,
-          message: `Đã có chỗ dành cho bác sĩ ${doctor_id} vào ${slot_date} lúc ${slot_time}`,
-        });
+        skippedSlotsCount++; // Bỏ qua slot này
+        continue;
       }
 
       // Thêm slot vào cơ sở dữ liệu
@@ -147,6 +243,7 @@ const addSlotsFromExcel = async (req, res) => {
         "INSERT INTO slots (doctor_id, slot_date, slot_time) VALUES (?, ?, ?)",
         [doctor_id, slot_date, slot_time]
       );
+      addedSlotsCount++;
     }
 
     // Xóa file sau khi xử lý
@@ -158,7 +255,10 @@ const addSlotsFromExcel = async (req, res) => {
       }
     });
 
-    res.json({ success: true, message: "Các slot đã được thêm thành công" });
+    res.json({
+      success: true,
+      message: `Thêm slot thành công: ${addedSlotsCount}, Bỏ qua slot trùng: ${skippedSlotsCount}`,
+    });
   } catch (error) {
     console.log("Lỗi:", error);
     res
